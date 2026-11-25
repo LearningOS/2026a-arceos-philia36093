@@ -165,6 +165,44 @@ impl VfsNodeOps for DirNode {
         }
     }
 
+    fn rename(&self, src_path: &str, dst_path: &str) -> VfsResult {
+        log::debug!("rename at ramfs: {} -> {}", src_path, dst_path);
+        let (src_dir, src_name) = split_dir_name(src_path);
+        let (dst_dir, dst_name) = split_dir_name(dst_path);
+        if src_name.is_empty()
+            || dst_name.is_empty()
+            || src_name == "."
+            || src_name == ".."
+            || dst_name == "."
+            || dst_name == ".."
+        {
+            return Err(VfsError::InvalidInput);
+        }
+        // Only support rename in the same directory, NOT move across directories.
+        if src_dir != dst_dir {
+            return Err(VfsError::Unsupported);
+        }
+        if src_name == dst_name {
+            return Ok(());
+        }
+
+        // Find the parent directory which contains the node to be renamed.
+        let this = self.this.upgrade().ok_or(VfsError::NotFound)?;
+        let dir = this.lookup(src_dir)?;
+        let dir = dir
+            .as_any()
+            .downcast_ref::<DirNode>()
+            .ok_or(VfsError::NotADirectory)?;
+
+        let mut children = dir.children.write();
+        if children.contains_key(dst_name) {
+            return Err(VfsError::AlreadyExists);
+        }
+        let node = children.remove(src_name).ok_or(VfsError::NotFound)?;
+        children.insert(String::from(dst_name), node);
+        Ok(())
+    }
+
     axfs_vfs::impl_vfs_dir_default! {}
 }
 
@@ -174,3 +212,16 @@ fn split_path(path: &str) -> (&str, Option<&str>) {
         (&trimmed_path[..n], Some(&trimmed_path[n + 1..]))
     })
 }
+
+/// Splits a path into its parent directory and its last component.
+///
+/// The leading and trailing `/` characters are trimmed, e.g., `"/foo/bar/"`
+/// is split into `("foo", "bar")` and `"bar"` is split into `("", "bar")`.
+fn split_dir_name(path: &str) -> (&str, &str) {
+    let path = path.trim_matches('/');
+    match path.rfind('/') {
+        Some(n) => (&path[..n], &path[n + 1..]),
+        None => ("", path),
+    }
+}
+

@@ -2,5 +2,16 @@
   "rust-analyzer.linkedProjects": ["arceos/Cargo.toml"],
   "rust-analyzer.cargo.target": "riscv64gc-unknown-none-elf",
   "rust-analyzer.cargo.allTargets": false,
-  "rust-analyzer.cargo.features": ["axstd"]
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "rust-analyzer.cargo.features": ["axstd"],
+  "rust-analyzer.check.allTargets": false,
+  "rust-analyzer.check.command": "clippy",
+
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": false,
+
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.cwd": "${workspaceFolder}"
 }

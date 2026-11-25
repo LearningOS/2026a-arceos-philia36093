@@ -1,6 +1,6 @@
 {
   "name": "ArceOS",
-  "image": "docker.io/1301182193/arceos-env@sha256:6e2cd3cd113a743967fd9f1e8cc1456cde59913a3a02e5878b9086fe696c1bcf",
+  "image": "docker.io/1301182193/arceos-env:latest",
   "runArgs": [
     "--platform=linux/amd64",
     "--hostname=arceos"
@@ -8,13 +8,20 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
   "workspaceFolder": "/workspace",
   "remoteUser": "root",
+  "containerEnv": {
+    "CARGO_TERM_COLOR": "always"
+  },
+  "postCreateCommand": "rustc --version && cargo --version && qemu-system-riscv64 --version | head -n 1",
   "customizations": {
     "vscode": {
       "extensions": [
         "rust-lang.rust-analyzer"
       ],
       "settings": {
-        "rust-analyzer.server.path": "/opt/cargo/bin/rust-analyzer"
+        "rust-analyzer.server.path": "/opt/cargo/bin/rust-analyzer",
+        "rust-analyzer.cargo.target": "riscv64gc-unknown-none-elf",
+        "rust-analyzer.linkedProjects": ["arceos/Cargo.toml"],
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
   }

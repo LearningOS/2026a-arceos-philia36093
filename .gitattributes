@@ -1,0 +1,15 @@
+# Normalize line endings to LF so that the shell scripts and Makefiles run
+# correctly inside the Linux Docker / Dev Container image, even when the
+# repository is checked out on Windows.
+* text=auto eol=lf
+
+# Binary files should never be converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.pptx binary
+*.excalidraw binary

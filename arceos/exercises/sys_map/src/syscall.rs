@@ -4,6 +4,7 @@ use core::ffi::{c_void, c_char, c_int};
 use axhal::arch::TrapFrame;
 use axhal::trap::{register_trap_handler, SYSCALL};
 use axerrno::LinuxError;
+use memory_addr::{VirtAddr, VirtAddrRange, PAGE_SIZE_4K};
 use axtask::current;
 use axtask::TaskExtRef;
 use axhal::paging::MappingFlags;
@@ -131,16 +132,80 @@ fn handle_syscall(tf: &TrapFrame, syscall_num: usize) -> isize {
     ret
 }
 
-#[allow(unused_variables)]
-fn sys_mmap(
-    addr: *mut usize,
-    length: usize,
-    prot: i32,
-    flags: i32,
-    fd: i32,
-    _offset: isize,
-) -> isize {
-    unimplemented!("no sys_mmap!");
+/// Map a file (or anonymous memory) into the current user address space.
+///
+/// This implements the Linux `mmap` system call. The file content is read and
+/// copied into the newly allocated user pages, so that the user program can
+/// read it back directly from the returned address.
+fn sys_mmap(addr: usize, length: usize, prot: i32, flags: i32, fd: i32, offset: isize) -> isize {
+    syscall_body!(sys_mmap, {
+        debug!(
+            "sys_mmap <= addr: {:#x}, length: {:#x}, prot: {}, flags: {:#x}, fd: {}, offset: {:#x}",
+            addr, length, prot, flags, fd, offset
+        );
+
+        if length == 0 {
+            return Err(LinuxError::EINVAL);
+        }
+        let prot = MmapProt::from_bits_truncate(prot);
+        let mmap_flags = MmapFlags::from_bits_truncate(flags);
+        let anonymous = mmap_flags.contains(MmapFlags::MAP_ANONYMOUS);
+        if !anonymous && fd < 0 {
+            return Err(LinuxError::EBADF);
+        }
+
+        // The mapping length must be page aligned.
+        let size = (length + PAGE_SIZE_4K - 1) & !(PAGE_SIZE_4K - 1);
+        let map_flags: MappingFlags = prot.into();
+
+        let curr = current();
+        let aspace = curr.task_ext().aspace.clone();
+        let mut aspace = aspace.lock();
+
+        let vaddr = if mmap_flags.contains(MmapFlags::MAP_FIXED) {
+            let vaddr = VirtAddr::from(addr & !(PAGE_SIZE_4K - 1));
+            if vaddr.as_usize() == 0 {
+                return Err(LinuxError::EINVAL);
+            }
+            vaddr
+        } else {
+            let hint = VirtAddr::from(addr);
+            let limit = VirtAddrRange::from_start_size(aspace.base(), aspace.size());
+            aspace
+                .find_free_area(hint, size, limit)
+                .ok_or(LinuxError::ENOMEM)?
+        };
+
+        aspace
+            .map_alloc(vaddr, size, map_flags, true)
+            .map_err(|_| LinuxError::ENOMEM)?;
+
+        if !anonymous {
+            // Seek to the requested file offset, then read the file content.
+            if offset > 0 {
+                api::sys_lseek(fd, offset as _, 0); // SEEK_SET
+            }
+            let mut buf = alloc::vec![0u8; size];
+            let mut nr_read = 0;
+            while nr_read < size {
+                let ret = api::sys_read(
+                    fd,
+                    buf[nr_read..].as_mut_ptr() as *mut c_void,
+                    size - nr_read,
+                );
+                if ret <= 0 {
+                    break;
+                }
+                nr_read += ret as usize;
+            }
+            aspace
+                .write(vaddr, &buf)
+                .map_err(|_| LinuxError::EINVAL)?;
+        }
+
+        debug!("sys_mmap => {:#x}", vaddr);
+        Ok(vaddr.as_usize())
+    })
 }
 
 fn sys_openat(dfd: c_int, fname: *const c_char, flags: c_int, mode: api::ctypes::mode_t) -> isize {

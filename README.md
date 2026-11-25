@@ -27,7 +27,7 @@ cd 2026a-arceos-YOUR_GITHUB_LOGIN
 
 首次会从 Docker Hub 下载课程镜像，以后启动时复用本地镜像。镜像内置与本期评测对应的 Rust `nightly-2024-09-04`、RISC-V musl GCC `11.2.1` 和 QEMU `8.2.2`，不用在电脑上分别安装。Apple 芯片的 Mac 也使用同一套 x86_64 工具。Windows 请在 WSL2 中执行。
 
-在电脑上编辑源码，在容器里运行 `./scripts/test-print.sh` 测第一题。六题都在 `main` 完成，见 **[做题指南：每题改哪里、怎么测、怎么提交](docs/STUDENT_GUIDE.md)**。
+在电脑上编辑源码，在容器里运行 `./scripts/test-print.sh` 测第一题。六题都在 `main` 完成，见 **[做题指南：每题改哪里、怎么测、怎么提交](docs/STUDENT_GUIDE.md)**。本机的 Docker / Dev Containers / VS Code 任务配置见 **[VS Code 开发环境配置](docs/VSCODE_ENV.md)**。
 
 ## 3. 六项练习
 

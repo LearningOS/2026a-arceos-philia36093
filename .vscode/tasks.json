@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ArceOS: test print_with_color",
+      "type": "shell",
+      "command": "bash ./scripts/test-print.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test ramfs_rename",
+      "type": "shell",
+      "command": "bash ./scripts/test-ramfs_rename.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test alt_alloc",
+      "type": "shell",
+      "command": "bash ./scripts/test-alt_alloc.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test support_hashmap",
+      "type": "shell",
+      "command": "bash ./scripts/test-support_hashmap.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test sys_map",
+      "type": "shell",
+      "command": "bash ./scripts/test-sys_map.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test simple_hv",
+      "type": "shell",
+      "command": "bash ./scripts/test-simple_hv.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: test all (total-test.sh)",
+      "type": "shell",
+      "command": "bash ./scripts/total-test.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ArceOS: open Docker shell (host terminal)",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-it",
+        "--platform=linux/amd64",
+        "--user=root",
+        "--hostname=arceos",
+        "-v",
+        "${workspaceFolder}:/workspace",
+        "-w",
+        "/workspace",
+        "docker.io/1301182193/arceos-env:latest",
+        "bash"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}
